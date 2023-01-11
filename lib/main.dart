@@ -3,6 +3,8 @@ import 'package:shop_organizer/shop_overview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'auth/register_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -54,8 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _createUserWithEmailAndPassword() async {
     try {
-      final credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _controllerEmail.text,
         password: _controllerPassword.text,
       );
@@ -71,6 +72,8 @@ class _MyHomePageState extends State<MyHomePage> {
         print('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
         print('The account already exists for that email.');
+      } else {
+        print(e.message);
       }
     } catch (e) {
       print(e);
@@ -131,9 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const Padding(padding: EdgeInsets.all(10.0)),
               ElevatedButton(
-                onPressed: () {
-                  _createUserWithEmailAndPassword;
-                },
+                onPressed: _createUserWithEmailAndPassword,
                 child: const Text(
                   "Login",
                   style: TextStyle(fontSize: 20),
@@ -145,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const ShopOverviewPage()),
+                        builder: (context) => const RegisterPage()),
                   );
                 },
                 child: const Text(
