@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:shop_organizer/shop_overview.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: 'AIzaSyAHTeHadzGnQ_mePM-LDuIHa5rojqfMQ90',
+      appId: '1:253917286239:android:81a86fb96073c4d198b0ea',
+      messagingSenderId: '253917286239',
+      projectId: 'shop-organizer-e0e9c',
+    ),
+  );
   runApp(const MyApp());
 }
 
@@ -31,6 +42,41 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final _controllerPassword = TextEditingController();
+  final _controllerEmail = TextEditingController();
+
+  @override
+  void dispose() {
+    _controllerEmail.dispose();
+    _controllerPassword.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createUserWithEmailAndPassword() async {
+    try {
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _controllerEmail.text,
+        password: _controllerPassword.text,
+      );
+      if (credential.user!.uid.isNotEmpty) {
+        // FirebaseAuth.instance.currentUser?.uid
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ShopOverviewPage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        print('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        print('The account already exists for that email.');
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,9 +99,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: TextStyle(fontSize: 20, color: Colors.black),
               ),
               const Padding(padding: EdgeInsets.all(20.0)),
-              Container(
+              SizedBox(
                 width: MediaQuery.of(context).size.width * 0.4,
                 child: TextField(
+                  controller: _controllerEmail,
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(50.0),
@@ -70,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.4,
                 child: TextField(
+                  controller: _controllerPassword,
                   obscureText: true,
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
@@ -84,6 +132,16 @@ class _MyHomePageState extends State<MyHomePage> {
               const Padding(padding: EdgeInsets.all(10.0)),
               ElevatedButton(
                 onPressed: () {
+                  _createUserWithEmailAndPassword;
+                },
+                child: const Text(
+                  "Login",
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+              const Padding(padding: EdgeInsets.all(10.0)),
+              ElevatedButton(
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -91,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 },
                 child: const Text(
-                  "Login",
+                  "Resister",
                   style: TextStyle(fontSize: 20),
                 ),
               ),
