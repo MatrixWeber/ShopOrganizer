@@ -7,14 +7,7 @@ import 'auth/register_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: 'AIzaSyAHTeHadzGnQ_mePM-LDuIHa5rojqfMQ90',
-      appId: '1:253917286239:android:81a86fb96073c4d198b0ea',
-      messagingSenderId: '253917286239',
-      projectId: 'shop-organizer-e0e9c',
-    ),
-  );
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -46,6 +39,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _controllerPassword = TextEditingController();
   final _controllerEmail = TextEditingController();
+  String _error = '';
+  Color _color = Colors.black;
 
   @override
   void dispose() {
@@ -54,18 +49,30 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  Future<void> _createUserWithEmailAndPassword() async {
+  Future<void> _createUserWithEmailAndPassword(
+      bool registrationWasPressed) async {
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _controllerEmail.text,
-        password: _controllerPassword.text,
-      );
-      if (credential.user!.uid.isNotEmpty) {
-        // FirebaseAuth.instance.currentUser?.uid
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopOverviewPage()),
+      if (registrationWasPressed) {
+        final credential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _controllerEmail.text,
+          password: _controllerPassword.text,
         );
+        print(
+            'user was registered successfully ${credential.user!.uid.toString()}');
+      } else {
+        final credential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _controllerEmail.text,
+          password: _controllerPassword.text,
+        );
+        if (credential.user!.uid.isNotEmpty) {
+          // FirebaseAuth.instance.currentUser?.uid
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ShopOverviewPage()),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
@@ -73,6 +80,10 @@ class _MyHomePageState extends State<MyHomePage> {
       } else if (e.code == 'email-already-in-use') {
         print('The account already exists for that email.');
       } else {
+        setState(() {
+          _error = e.message.toString();
+          _color = Colors.red;
+        });
         print(e.message);
       }
     } catch (e) {
@@ -103,13 +114,14 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const Padding(padding: EdgeInsets.all(20.0)),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.4,
+                width: MediaQuery.of(context).size.width * 0.6,
                 child: TextField(
+                  key: const Key('EmailKey'),
                   controller: _controllerEmail,
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(50.0),
-                    ),
+                  decoration: const InputDecoration(
+                    // enabledBorder: OutlineInputBorder(
+                    //   borderRadius: BorderRadius.circular(50.0),
+                    // ),
                     hintText: 'max.mustermann@example.de',
                     // border: OutlineInputBorder(),
                     // labelText: 'Email',
@@ -118,41 +130,49 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const Padding(padding: EdgeInsets.all(10.0)),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.4,
+                width: MediaQuery.of(context).size.width * 0.6,
                 child: TextField(
+                  key: const Key('PasswordKey'),
                   controller: _controllerPassword,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(50.0),
-                    ),
+                  decoration: const InputDecoration(
+                    // enabledBorder: OutlineInputBorder(
+                    //   borderRadius: BorderRadius.circular(50.0),
+                    // ),
                     hintText: 'password',
                     // border: OutlineInputBorder(),
-                    // labelText: 'Email',
+                    // labelText: 'Passwort',
                   ),
                 ),
               ),
+              if (_error.isNotEmpty == true)
+                Text(_error, style: TextStyle(fontSize: 16, color: _color)),
               const Padding(padding: EdgeInsets.all(10.0)),
-              ElevatedButton(
-                onPressed: _createUserWithEmailAndPassword,
-                child: const Text(
-                  "Login",
-                  style: TextStyle(fontSize: 20),
-                ),
-              ),
-              const Padding(padding: EdgeInsets.all(10.0)),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const RegisterPage()),
-                  );
-                },
-                child: const Text(
-                  "Resister",
-                  style: TextStyle(fontSize: 20),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    key: const Key('LoginButton'),
+                    onPressed: () => _createUserWithEmailAndPassword(false),
+                    child: const Text(
+                      "Login",
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () =>
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //       builder: (context) => const RegisterPage()),
+                        // );
+                        _createUserWithEmailAndPassword(true),
+                    child: const Text(
+                      "Resister",
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
